@@ -167,13 +167,15 @@ class AdminPanel {
     }
   }
 
-  _saveTournamentData() {
-  if (!window.RemoteStore) return;
-  window.RemoteStore.update({
-    tournamentData: this.tournamentData
-  }).catch(() => {});
-}
+_saveTournamentData() {
+  localStorage.setItem('tournamentData', JSON.stringify(this.tournamentData));
+  localStorage.setItem('tournamentPrizes', JSON.stringify(this.tournamentData.rewards || []));
 
+  // ★追加：Firestoreにも保存
+  if (window.RemoteStore) {
+    window.RemoteStore.saveTournamentData(this.tournamentData);
+  }
+}
 
   _saveAll() {
     this._saveTournamentData();
