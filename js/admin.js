@@ -8,7 +8,7 @@ class AdminPanel {
       totalEntries: 0,
       initialStack: 10000,
       entryFee: 0,
-      rewards: ['100,000円', '60,000円', '40,000円'],
+      rewards: ['1000円', '500円', '300円'],
     };
 
     this._bindElements();
@@ -16,6 +16,25 @@ class AdminPanel {
     this._wireEvents();
     this._renderAll();
 
+
+
+
+    if (window.RemoteStore) {
+  window.RemoteStore.subscribe((remote) => {
+    if (remote.tournamentData) {
+      this.tournamentData = { ...this.tournamentData, ...remote.tournamentData };
+      this._renderAll();
+    }
+    if (remote.timerState) {
+      this.timer.loadDataFromRemote(remote);
+      this._renderTimerControls();
+    }
+  });
+}
+
+
+
+    
     setInterval(() => this._renderTimerControls(), 1000);
   }
 
@@ -149,9 +168,12 @@ class AdminPanel {
   }
 
   _saveTournamentData() {
-    localStorage.setItem('tournamentData', JSON.stringify(this.tournamentData));
-    localStorage.setItem('tournamentPrizes', JSON.stringify(this.tournamentData.rewards || []));
-  }
+  if (!window.RemoteStore) return;
+  window.RemoteStore.update({
+    tournamentData: this.tournamentData
+  }).catch(() => {});
+}
+
 
   _saveAll() {
     this._saveTournamentData();
