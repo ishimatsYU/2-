@@ -512,10 +512,18 @@ _saveTournamentData() {
   }
 
   _toggleTimer() {
-    if (this.timer.isRunning) this.timer.stop();
-    else this.timer.start();
-    this._renderTimerControls();
+  if (this.timer.isRunning) this.timer.stop();
+  else this.timer.start();
+
+  this._renderTimerControls();
+
+  // ★追加：timerState をFirestoreにも保存
+  if (window.RemoteStore) {
+    const timerState = JSON.parse(localStorage.getItem('tournamentTimer') || '{}');
+    window.RemoteStore.saveTimerState(timerState);
   }
+}
+
 
   _breakCut() {
     if (!this.timer.isBreak) return;
