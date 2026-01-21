@@ -41,42 +41,61 @@ class TournamentTimer {
     }
   }
 
-  // ===== 永続化 =====
-  _persist() {
-    const data = {
+ // ===== 永続化 =====
+_persist() {
+  // RemoteStore が無い（Firebase未ロード等）なら何もしない
+  if (!window.RemoteStore) return;
+
+  const data = {
+    timerState: {
       timers: this.timers,
       currentTimerIndex: this.currentTimerIndex,
       currentLevelIndex: this.currentLevelIndex,
+
+      // ★同期時点の残り秒
       timeRemaining: this.timeRemaining,
+
       isBreak: this.isBreak,
       isRunning: this.isRunning,
       settings: this.settings,
-      lastUpdated: Date.now(),
-    };
-    const json = JSON.stringify(data);
-    if (json !== this._lastSavedJson) {
-      localStorage.setItem('tournamentTimer', json);
-      this._lastSavedJson = json;
-    }
+
+      // ★同期した時刻（各端末が差分計算する）
+      syncedAt: Date.now(),
+    },
+  };
+
+  // 毎回書き込みすぎないよう、前回と同じならスキップ
+  const json = JSON.stringify(data.timerState);
+  if (json === this._lastSavedJson) return;
+  this._lastSavedJson = json;
+
+  window.RemoteStore.update(data).catch(() => {});
+}
+
+loadDataFromRemote(remote) {
+  // remote.timerState を読み込む
+  const ts = remote && remote.timerState ? remote.timerState : null;
+  if (!ts) return;
+
+  this.timers = Array.isArray(ts.timers) ? ts.timers : [];
+  this.currentTimerIndex = Number.isInteger(ts.currentTimerIndex) ? ts.currentTimerIndex : 0;
+  this.currentLevelIndex = Number.isInteger(ts.currentLevelIndex) ? ts.currentLevelIndex : 0;
+
+  this.isBreak = !!ts.isBreak;
+  this.isRunning = !!ts.isRunning;
+  this.settings = { ...this.settings, ...(ts.settings || {}) };
+
+  let remaining = Number.isFinite(ts.timeRemaining) ? ts.timeRemaining : 0;
+
+  // ★isRunningなら syncedAt から経過秒を引いて “今の残り秒” を再現
+  const syncedAt = Number.isFinite(ts.syncedAt) ? ts.syncedAt : Date.now();
+  if (this.isRunning) {
+    const elapsedSec = Math.floor((Date.now() - syncedAt) / 1000);
+    remaining = Math.max(0, remaining - elapsedSec);
   }
 
-  loadData() {
-    const saved = localStorage.getItem('tournamentTimer');
-    if (!saved) return;
-    try {
-      const data = JSON.parse(saved);
-      this.timers = Array.isArray(data.timers) ? data.timers : [];
-      this.currentTimerIndex = Number.isInteger(data.currentTimerIndex) ? data.currentTimerIndex : 0;
-      this.currentLevelIndex = Number.isInteger(data.currentLevelIndex) ? data.currentLevelIndex : 0;
-      this.timeRemaining = Number.isFinite(data.timeRemaining) ? data.timeRemaining : 0;
-      this.isBreak = !!(data.isBreak);
-      this.isRunning = !!(data.isRunning);
-      this.settings = { ...this.settings, ...(data.settings || {}) };
-      this._lastSavedJson = saved;
-    } catch {
-      this.timers = [];
-    }
-  }
+  this.timeRemaining = remaining;
+}
 
   // ===== タイマー定義 =====
   _createDefaultTimer() {
