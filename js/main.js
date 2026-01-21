@@ -13,10 +13,17 @@ class MainDisplay {
     // Firestore の状態を購読して反映
 if (window.RemoteStore) {
   window.RemoteStore.subscribe((remote) => {
-    this.timer.loadDataFromRemote(remote);
+    if (remote.tournamentData) {
+      localStorage.setItem('tournamentData', JSON.stringify(remote.tournamentData));
+    }
+    if (remote.timerState) {
+      localStorage.setItem('tournamentTimer', JSON.stringify(remote.timerState));
+    }
+    this.timer.loadData();
     this._renderAll();
   });
 }
+
 
   }
 
