@@ -10,6 +10,14 @@ class MainDisplay {
     setInterval(() => this._renderTimerOnly(), 1000);
     // 5秒ごとに全体再読込（保険）
     setInterval(() => { this.timer.loadData(); this._renderAll(); }, 5000);
+    // Firestore の状態を購読して反映
+if (window.RemoteStore) {
+  window.RemoteStore.subscribe((remote) => {
+    this.timer.loadDataFromRemote(remote);
+    this._renderAll();
+  });
+}
+
   }
 
   _bindElements() {
