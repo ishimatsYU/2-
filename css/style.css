@@ -5,7 +5,7 @@
     box-sizing: border-box;
 }
 
-body {
+.body {
     font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'メイリオ', Meiryo, 'ＭＳ Ｐゴシック', sans-serif;
     background: linear-gradient(135deg, #87CEEB 0%, #B0E0E6 100%);
     color: #FFFFFF;
